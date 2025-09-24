@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Currency Converter</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #1f1c2c, #928DAB);
+      font-family: Arial, sans-serif;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .converter {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      text-align: center;
+      width: 350px;
+    }
+    h1 {
+      margin-bottom: 20px;
+      font-size: 22px;
+    }
+    select, input {
+      padding: 8px;
+      margin: 5px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+    }
+    button {
+      background: #ff9800;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      margin: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #e68900;
+    }
+    #result {
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="converter">
+    <h1>💱 Currency Converter</h1>
+    <div>
+      <input type="number" id="amount" placeholder="Enter amount" value="1">
+    </div>
+    <div>
+      <select id="fromCurrency"></select>
+      <button id="switchBtn"><i class="fas fa-exchange-alt"></i></button>
+      <select id="toCurrency"></select>
+    </div>
+    <button id="convertBtn">Convert</button>
+    <div id="result">Enter values to convert</div>
+  </div>
+
+  <script>
+    const fromCurrency = document.getElementById("fromCurrency");
+    const toCurrency = document.getElementById("toCurrency");
+    const amount = document.getElementById("amount");
+    const result = document.getElementById("result");
+    const switchBtn = document.getElementById("switchBtn");
+
+    const API_KEY = "8f686965a47e0072875ab406"; 
+    const BASE_URL = `https://v6.exchangerate-api.com/v6/${API_KEY}`;
+
+
+    async function loadCurrencies() {
+      try {
+        const res = await fetch(`${BASE_URL}/codes`);
+        const data = await res.json();
+        if (data.result === "success") {
+          data.supported_codes.forEach(([code, name]) => {
+            const option1 = document.createElement("option");
+            const option2 = document.createElement("option");
+            option1.value = option2.value = code;
+            option1.textContent = `${code} - ${name}`;
+            option2.textContent = `${code} - ${name}`;
+            fromCurrency.appendChild(option1);
+            toCurrency.appendChild(option2);
+          });
+          fromCurrency.value = "USD";
+          toCurrency.value = "EUR";
+        }
+      } catch (error) {
+        result.textContent = "❌ Error loading currencies.";
+      }
+    }
+
+   
+    async function convertCurrency() {
+      const from = fromCurrency.value;
+      const to = toCurrency.value;
+      const amt = amount.value;
+
+      if (!amt || amt <= 0) {
+        result.textContent = "⚠️ Enter a valid amount.";
+        return;
+      }
+
+      try {
+        result.textContent = "⏳ Loading...";
+        const res = await fetch(`${BASE_URL}/pair/${from}/${to}/${amt}`);
+        const data = await res.json();
+        if (data.result === "success") {
+          result.textContent = `${amt} ${from} = ${data.conversion_result} ${to} 
+          (Rate: ${data.conversion_rate})`;
+        } else {
+          result.textContent = "❌ Conversion failed.";
+        }
+      } catch (error) {
+        result.textContent = "❌ Error fetching data.";
+      }
+    }
+
+   
+    switchBtn.addEventListener("click", () => {
+      const temp = fromCurrency.value;
+      fromCurrency.value = toCurrency.value;
+      toCurrency.value = temp;
+      convertCurrency();
+    });
+
+    document.getElementById("convertBtn").addEventListener("click", convertCurrency);
+
+    loadCurrencies();
+  </script>
+</body>
+</html>
