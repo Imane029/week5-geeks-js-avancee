@@ -1,0 +1,15 @@
+{
+  "name": "daily-chall",
+  "version": "1.0.0",
+  "description": "Node.js Daily Challenge with modules, file operations, and chalk",
+  "main": "challenge.js",
+  "type": "module",
+  "scripts": {
+    "start": "node challenge.js"
+  },
+  "author": "Imane",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^5.6.2"
+  }
+}
