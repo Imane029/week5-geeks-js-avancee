@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Emoji Guessing Game 🎮</title>
+ <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Emoji Guessing Game 🎉</h1>
+
+  <label>Choisis un niveau :</label>
+  <select id="level">
+    <option value="easy">Facile</option>
+    <option value="medium">Moyen</option>
+    <option value="hard">Difficile</option>
+  </select>
+  <button onclick="startGame()">Commencer</button>
+
+  <div id="game"></div>
+  <div id="timer"></div>
+  <div id="feedback"></div>
+
+  <h2>Leaderboard</h2>
+  <ul id="leaderboard"></ul>
+
+  <script>
+    let currentAnswer = '';
+    let timeRemaining = 0;
+    let timerInterval;
+    const playerName = prompt("Entre ton pseudo :") || "Guest";
+
+    async function startGame() {
+      clearInterval(timerInterval);
+      const level = document.getElementById("level").value;
+      const res = await fetch(`/game?level=${level}`);
+      const data = await res.json();
+      currentAnswer = data.answer;
+      timeRemaining = data.timeLimit;
+
+      document.getElementById('game').innerHTML = `
+        <h2>${data.emoji}</h2>
+        ${data.options.map(opt => `
+          <button onclick="submitGuess('${opt}')">${opt}</button>
+        `).join('')}
+        <br><button onclick="showHint()">Indice</button>
+      `;
+
+      document.getElementById('feedback').innerText = "";
+      startTimer(level);
+    }
+
+    function startTimer(level) {
+      document.getElementById('timer').innerText = `Temps restant : ${timeRemaining}s`;
+      timerInterval = setInterval(() => {
+        timeRemaining--;
+        document.getElementById('timer').innerText = `Temps restant : ${timeRemaining}s`;
+        if (timeRemaining <= 0) {
+          clearInterval(timerInterval);
+          document.getElementById('feedback').innerText = "⏰ Temps écoulé !";
+          startGame();
+        }
+      }, 1000);
+    }
+
+    async function submitGuess(guess) {
+      clearInterval(timerInterval);
+      const level = document.getElementById("level").value;
+      const res = await fetch('/guess', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guess, answer: currentAnswer, player: playerName, level })
+      });
+
+      const data = await res.json();
+      document.getElementById('feedback').innerText =
+        data.correct ? "✅ Bonne réponse !" : "❌ Mauvaise réponse !";
+      loadLeaderboard();
+      startGame();
+    }
+
+    function showHint() {
+      document.getElementById('feedback').innerText =
+        `Indice : ${currentAnswer.charAt(0)}...`;
+    }
+
+    async function loadLeaderboard() {
+      const res = await fetch('/leaderboard');
+      const data = await res.json();
+      document.getElementById('leaderboard').innerHTML =
+        data.map(l => `<li>${l.player}: ${l.score}</li>`).join('');
+    }
+
+    loadLeaderboard();
+  </script>
+</body>
+</html>
