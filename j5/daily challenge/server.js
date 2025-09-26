@@ -17,15 +17,15 @@ const emojis = [
 ];
 
 let leaderboard = [];
-let playerScores = {}; // scores par joueur
+let playerScores = {}; 
 
 function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
 
-// Retourne un jeu selon la difficulté
+
 app.get('/game', (req, res) => {
-  const { level } = req.query; // facile, moyen, difficile
+  const { level } = req.query; 
   let optionsCount = 4;
   let timeLimit = 10;
 
@@ -54,7 +54,7 @@ app.get('/game', (req, res) => {
   });
 });
 
-// Vérifie la réponse
+
 app.post('/guess', (req, res) => {
   const { guess, answer, player, level } = req.body;
   let correct = false;
@@ -73,7 +73,7 @@ app.post('/guess', (req, res) => {
   res.json({ correct, score: playerScores[player] });
 });
 
-// Leaderboard
+
 app.get('/leaderboard', (req, res) => {
   res.json(leaderboard.slice(0, 5));
 });
