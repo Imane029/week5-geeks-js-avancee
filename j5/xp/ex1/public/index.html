@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Blog API - Frontend</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Mini Blog (Front)</h1>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Créer un nouveau post</h2>
+      <form id="createForm">
+        <input id="titleInput" placeholder="Titre" required />
+        <textarea id="contentInput" placeholder="Contenu" rows="4" required></textarea>
+        <button type="submit">Créer</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Posts</h2>
+      <div id="postsContainer">Chargement des posts…</div>
+    </section>
+  </main>
+
+  <footer>
+    <small>Serveur attendu: GET/POST/PUT/DELETE /posts</small>
+  </footer>
+
+<script>
+const API_BASE = '/posts';
+
+async function fetchPosts() {
+  const res = await fetch(API_BASE);
+  if (!res.ok) {
+    document.getElementById('postsContainer').innerText = 'Erreur lors de la récupération des posts';
+    return [];
+  }
+  return res.json();
+}
+
+function createPostElement(post) {
+  const el = document.createElement('div');
+  el.className = 'post';
+
+  el.innerHTML = `
+    <h3 class="post-title">${escapeHtml(post.title)}</h3>
+    <p class="post-content">${escapeHtml(post.content)}</p>
+    <div class="post-actions">
+      <button class="edit-btn">Modifier</button>
+      <button class="delete-btn">Supprimer</button>
+    </div>
+    <div class="edit-area" style="display:none;">
+      <input class="edit-title" value="${escapeAttr(post.title)}" />
+      <textarea class="edit-content">${escapeHtml(post.content)}</textarea>
+      <button class="save-btn">Enregistrer</button>
+      <button class="cancel-btn">Annuler</button>
+    </div>
+  `;
+
+  el.querySelector('.delete-btn').addEventListener('click', async () => {
+    if (!confirm('Supprimer ce post ?')) return;
+    const res = await fetch(`${API_BASE}/${post.id}`, { method: 'DELETE' });
+    if (res.ok) loadAndRender();
+    else alert('Erreur lors de la suppression');
+  });
+
+  const editBtn = el.querySelector('.edit-btn');
+  const editArea = el.querySelector('.edit-area');
+  editBtn.addEventListener('click', () => {
+    editArea.style.display = editArea.style.display === 'none' ? 'block' : 'none';
+  });
+
+  el.querySelector('.cancel-btn').addEventListener('click', () => editArea.style.display = 'none');
+
+  el.querySelector('.save-btn').addEventListener('click', async () => {
+    const newTitle = el.querySelector('.edit-title').value.trim();
+    const newContent = el.querySelector('.edit-content').value.trim();
+    if (!newTitle || !newContent) { alert('Titre et contenu requis'); return; }
+    const res = await fetch(`${API_BASE}/${post.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: newTitle, content: newContent })
+    });
+    if (res.ok) {
+      editArea.style.display = 'none';
+      loadAndRender();
+    } else alert('Erreur lors de la mise à jour');
+  });
+
+  return el;
+}
+
+async function loadAndRender() {
+  const container = document.getElementById('postsContainer');
+  container.innerText = 'Chargement…';
+  try {
+    const posts = await fetchPosts();
+    container.innerHTML = '';
+    if (!posts || posts.length === 0) {
+      container.innerText = 'Aucun post trouvé.';
+      return;
+    }
+    posts.forEach(p => container.appendChild(createPostElement(p)));
+  } catch (e) {
+    container.innerText = 'Erreur réseau';
+    console.error(e);
+  }
+}
+
+document.getElementById('createForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const title = document.getElementById('titleInput').value.trim();
+  const content = document.getElementById('contentInput').value.trim();
+  if (!title || !content) return alert('Remplis tous les champs');
+  const res = await fetch(API_BASE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, content })
+  });
+  if (res.ok) {
+    document.getElementById('titleInput').value = '';
+    document.getElementById('contentInput').value = '';
+    loadAndRender();
+  } else alert('Erreur lors de la création du post');
+});
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+function escapeAttr(s) {
+  return String(s).replace(/"/g, '&quot;');
+}
+
+loadAndRender();
+</script>
+</body>
+</html>

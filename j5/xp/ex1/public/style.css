@@ -1,0 +1,58 @@
+:root{
+  --bg1:#f6f9ff;
+  --card:#ffffff;
+  --accent:#5b8def;
+  --muted:#6b7280;
+}
+
+*{box-sizing:border-box}
+body{
+  font-family: Inter, system-ui, "Segoe UI", Roboto, Arial;
+  background: linear-gradient(180deg,var(--bg1),#e8f0ff 60%);
+  margin:0;
+  color:#111827;
+  -webkit-font-smoothing:antialiased;
+}
+
+header{
+  text-align:center;
+  padding:28px 16px 8px;
+}
+header h1{margin:0;font-size:1.8rem;color:var(--accent)}
+header p{margin:6px 0 0;color:var(--muted)}
+
+main{max-width:900px;margin:20px auto;padding:0 16px}
+
+.card{
+  background:var(--card);
+  padding:18px;
+  border-radius:12px;
+  box-shadow:0 6px 18px rgba(59,65,85,0.06);
+  margin-bottom:18px;
+}
+
+form{display:flex;flex-direction:column;gap:10px}
+input[type="text"], textarea, input{
+  padding:10px 12px;border-radius:8px;border:1px solid #e6eef8;font-size:1rem;outline:none;
+}
+textarea{resize:vertical}
+button{
+  align-self:flex-start;
+  background:var(--accent);color:white;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:600;
+  box-shadow:0 6px 12px rgba(91,141,239,0.18);
+}
+button:hover{transform:translateY(-2px)}
+
+.post{border:1px solid #f0f4ff;padding:12px;border-radius:10px;margin:10px 0;display:block}
+.post-title{margin:0 0 6px;font-size:1.05rem;color:#0f172a}
+.post-content{margin:0 0 8px;color:#374151}
+.post-actions{display:flex;gap:8px}
+.post-actions button{background:#f3f4f6;color:#111;border:1px solid #e6eef8;padding:6px 8px;font-weight:600;box-shadow:none}
+.post-actions button:hover{filter:brightness(0.98)}
+
+.edit-area{margin-top:10px;background:#fbfdff;padding:10px;border-radius:8px;border:1px solid #eef6ff}
+footer{text-align:center;padding:16px;color:var(--muted);font-size:.9rem}
+@media (max-width:600px){
+  main{padding:0 12px}
+  .post .edit-area input, .post .edit-area textarea{width:100%}
+}

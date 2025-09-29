@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Exercice 3 - CRUD API avec Express et Axios</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Exercice 3 : Express + Axios</h1>
+    <p>Posts récupérés depuis JSONPlaceholder</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Liste des posts</h2>
+      <div id="postsContainer">Chargement des posts…</div>
+    </section>
+  </main>
+
+<script>
+async function fetchPosts() {
+  try {
+    const res = await fetch('/posts'); 
+    if (!res.ok) throw new Error('Erreur API');
+    const posts = await res.json();
+    return posts;
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+}
+
+function createPostElement(post) {
+  const el = document.createElement('div');
+  el.className = 'post';
+  el.innerHTML = `
+    <h3>${escapeHtml(post.title)}</h3>
+    <p>${escapeHtml(post.body)}</p>
+  `;
+  return el;
+}
+
+async function loadPosts() {
+  const container = document.getElementById('postsContainer');
+  container.innerText = 'Chargement…';
+  const posts = await fetchPosts();
+  container.innerHTML = '';
+  if (!posts || posts.length === 0) {
+    container.innerText = 'Aucun post trouvé.';
+    return;
+  }
+  posts.slice(0, 10).forEach(p => container.appendChild(createPostElement(p))); // affiche 10 posts
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+loadPosts();
+</script>
+</body>
+</html>
