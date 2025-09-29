@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Book API </title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Mini Book Collection</h1>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Ajouter un livre</h2>
+      <form id="createForm">
+        <input id="titleInput" placeholder="Titre" required>
+        <input id="authorInput" placeholder="Auteur" required>
+        <input id="yearInput" type="number" placeholder="Année" required>
+        <button type="submit">Ajouter</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Livres</h2>
+      <div id="booksContainer">Chargement des livres…</div>
+    </section>
+  </main>
+
+<script>
+const API_BASE = '/api/books';
+
+async function fetchBooks() {
+  const res = await fetch(API_BASE);
+  return res.ok ? res.json() : [];
+}
+
+function createBookElement(book) {
+  const el = document.createElement('div');
+  el.className = 'book';
+
+  el.innerHTML = `
+    <h3>${escapeHtml(book.title)} (${book.publishedYear})</h3>
+    <p>Auteur: ${escapeHtml(book.author)}</p>
+    <div class="actions">
+      <button class="edit-btn">Modifier</button>
+      <button class="delete-btn">Supprimer</button>
+    </div>
+    <div class="edit-area" style="display:none;">
+      <input class="edit-title" value="${escapeAttr(book.title)}">
+      <input class="edit-author" value="${escapeAttr(book.author)}">
+      <input class="edit-year" type="number" value="${book.publishedYear}">
+      <button class="save-btn">Enregistrer</button>
+      <button class="cancel-btn">Annuler</button>
+    </div>
+  `;
+
+  // Delete
+  el.querySelector('.delete-btn').addEventListener('click', async () => {
+    if (!confirm('Supprimer ce livre ?')) return;
+    const res = await fetch(`${API_BASE}/${book.id}`, { method: 'DELETE' });
+    if (res.ok) loadAndRender();
+  });
+
+  // Edit
+  const editBtn = el.querySelector('.edit-btn');
+  const editArea = el.querySelector('.edit-area');
+  editBtn.addEventListener('click', () => {
+    editArea.style.display = editArea.style.display === 'none' ? 'block' : 'none';
+  });
+  el.querySelector('.cancel-btn').addEventListener('click', () => editArea.style.display = 'none');
+  el.querySelector('.save-btn').addEventListener('click', async () => {
+    const newTitle = el.querySelector('.edit-title').value.trim();
+    const newAuthor = el.querySelector('.edit-author').value.trim();
+    const newYear = parseInt(el.querySelector('.edit-year').value);
+    if (!newTitle || !newAuthor || !newYear) return alert('Tous les champs sont requis');
+    const res = await fetch(`${API_BASE}/${book.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: newTitle, author: newAuthor, publishedYear: newYear })
+    });
+    if (res.ok) {
+      editArea.style.display = 'none';
+      loadAndRender();
+    }
+  });
+
+  return el;
+}
+
+async function loadAndRender() {
+  const container = document.getElementById('booksContainer');
+  container.innerText = 'Chargement…';
+  const books = await fetchBooks();
+  container.innerHTML = '';
+  if (!books || books.length === 0) {
+    container.innerText = 'Aucun livre trouvé.';
+    return;
+  }
+  books.forEach(b => container.appendChild(createBookElement(b)));
+}
+
+document.getElementById('createForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const title = document.getElementById('titleInput').value.trim();
+  const author = document.getElementById('authorInput').value.trim();
+  const year = parseInt(document.getElementById('yearInput').value);
+  if (!title || !author || !year) return alert('Tous les champs sont requis');
+  const res = await fetch(API_BASE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, author, publishedYear: year })
+  });
+  if (res.ok) {
+    document.getElementById('titleInput').value = '';
+    document.getElementById('authorInput').value = '';
+    document.getElementById('yearInput').value = '';
+    loadAndRender();
+  }
+});
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]) }
+function escapeAttr(s){ return String(s).replace(/"/g,'&quot;') }
+
+loadAndRender();
+</script>
+</body>
+</html>
