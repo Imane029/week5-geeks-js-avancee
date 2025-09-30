@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test API JWT</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; }
+  input, button { padding: 8px; margin: 5px 0; width: 100%; }
+  .result { margin-top: 10px; padding: 10px; border: 1px solid #ccc; }
+</style>
+</head>
+<body>
+  <h2>Inscription</h2>
+  <input type="text" id="regUsername" placeholder="Username">
+  <input type="password" id="regPassword" placeholder="Password">
+  <button onclick="register()">S'inscrire</button>
+  <div id="registerResult" class="result"></div>
+
+  <h2>Connexion</h2>
+  <input type="text" id="loginUsername" placeholder="Username">
+  <input type="password" id="loginPassword" placeholder="Password">
+  <button onclick="login()">Se connecter</button>
+  <div id="loginResult" class="result"></div>
+
+  <h2>Profil</h2>
+  <button onclick="getProfile()">Voir mon profil</button>
+  <div id="profileResult" class="result"></div>
+
+<script>
+let token = "";
+
+async function register() {
+  const username = document.getElementById("regUsername").value;
+  const password = document.getElementById("regPassword").value;
+
+  const res = await fetch("http://localhost:5000/api/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json();
+  document.getElementById("registerResult").innerText = JSON.stringify(data, null, 2);
+}
+
+async function login() {
+  const username = document.getElementById("loginUsername").value;
+  const password = document.getElementById("loginPassword").value;
+
+  const res = await fetch("http://localhost:5000/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json();
+  document.getElementById("loginResult").innerText = JSON.stringify(data, null, 2);
+  
+  if(data.token) token = data.token; // sauvegarde le token pour accéder au profil
+}
+
+async function getProfile() {
+  const res = await fetch("http://localhost:5000/api/profile", {
+    method: "GET",
+    headers: { "Authorization": "Bearer " + token }
+  });
+
+  const data = await res.json();
+  document.getElementById("profileResult").innerText = JSON.stringify(data, null, 2);
+}
+</script>
+</body>
+</html>

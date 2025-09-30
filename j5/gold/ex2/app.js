@@ -1,0 +1,61 @@
+// Charger les variables d'environnement
+require('dotenv').config();
+
+const express = require("express");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
+const app = express();
+const PORT = 5000;
+
+const SECRET_KEY = process.env.SECRET_KEY;
+
+app.use(express.json());
+
+// 👇 NEW: Serve les fichiers statiques (index.html, css, js) depuis le dossier public
+app.use(express.static("public"));
+
+// Fake DB
+const users = [];
+
+// Enregistrement
+app.post("/api/register", async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: "Champs manquants" });
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  users.push({ username, password: hashedPassword });
+  res.status(201).json({ message: "Utilisateur enregistré !" });
+});
+
+// Connexion
+app.post("/api/login", async (req, res) => {
+  const { username, password } = req.body;
+  const user = users.find(u => u.username === username);
+  if (!user) return res.status(400).json({ error: "Utilisateur introuvable" });
+
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) return res.status(400).json({ error: "Mot de passe incorrect" });
+
+  const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: "1h" });
+  res.json({ message: "Connexion réussie", token });
+});
+
+// Profil
+app.get("/api/profile", (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "Token manquant" });
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    res.json({ username: decoded.username });
+  } catch (err) {
+    res.status(401).json({ error: "Token invalide" });
+  }
+});
+
+// Lancement serveur
+app.listen(PORT, () =>
+  console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`)
+);
